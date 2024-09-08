@@ -8,8 +8,8 @@ COVERAGE_MIN=50
 build:
 	docker buildx build --platform=linux/amd64 \
 		-f Dockerfile \
-		-t weather-widget \
-		../../
+		-t livery-stable \
+		.
 
 test: 
 	go test -timeout 10s -cover -coverprofile=coverage.out ./...

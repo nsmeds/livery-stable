@@ -7,14 +7,14 @@ import (
 	"sync"
 	"testing"
 
-	main "github.com/nsmeds/weather-widget/cmd"
+	main "github.com/nsmeds/livery-stable/cmd"
 )
 
 func TestRun(t *testing.T) {
 	t.Run("start the service", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		args := []string{
-			"weather-widget",
+			"livery-stable",
 			"--host", "localhost",
 			"--port", "8080",
 		}

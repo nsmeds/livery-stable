@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/nsmeds/weather-widget/server"
+	"github.com/nsmeds/livery-stable/server"
 )
 
 func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, stderr io.Writer) error {
@@ -20,7 +20,7 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 	defaultHost := "localhost"
 	defaultPort := 8080
 
-	flags := flag.NewFlagSet("weather-widget", flag.ContinueOnError)
+	flags := flag.NewFlagSet("livery-stable", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	host := flags.String("host", defaultHost, "hostname for server")
 	port := flags.Int("port", defaultPort, "port for server")
