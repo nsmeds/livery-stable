@@ -11,6 +11,9 @@ build:
 		-t livery-stable \
 		.
 
+lint:
+	staticcheck ./...
+
 test: 
 	go test -timeout 10s -cover -coverprofile=coverage.out ./...
 	@go tool cover -func coverage.out | \
