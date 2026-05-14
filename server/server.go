@@ -40,3 +40,26 @@ func (s *Server) handleDefaultRequest() http.HandlerFunc {
 		w.Write([]byte(message))
 	}
 }
+
+func (s *Server) handleMain() http.HandlerFunc {
+	// TODO check method - only GET is allowed
+	// TODO implement template
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+type audioFile struct {
+	title string
+	data  []byte
+}
+
+type fileMap []audioFile
+
+func getAllFiles() (*fileMap, error) {
+	var f fileMap
+	// TODO abstraction ov 
+	return &f, nil
+}
