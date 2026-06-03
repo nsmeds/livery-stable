@@ -2,19 +2,19 @@ package server
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"time"
+
+	"github.com/nsmeds/livery-stable/store"
 )
 
 type Server struct {
 	*http.Server
-	// TODO logger
-	// TODO metrics
+	store  *store.Store
+	config Config
 }
 
-func New(host string, port int) *Server {
-	s := Server{}
+func New(host string, port int, st *store.Store, cfg Config) *Server {
+	s := Server{store: st, config: cfg}
 	httpServer := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", host, port),
 		Handler: s.Routes(),
@@ -25,28 +25,16 @@ func New(host string, port int) *Server {
 
 func (s *Server) handleDefaultRequest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		processStartedAt := time.Now().Format(time.RFC3339Nano)
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			w.Header().Set("content-type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"message": "internal system error"}`))
-			return
-		}
-		message := fmt.Sprintf("received %v at %s", string(body), processStartedAt)
-		w.Header().Set("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(message))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error":"not found"}`))
 	}
 }
 
 func (s *Server) handleMain() http.HandlerFunc {
-	// TODO check method - only GET is allowed
 	// TODO implement template
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		w.Header().Set("content-type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -60,6 +48,6 @@ type fileMap []audioFile
 
 func getAllFiles() (*fileMap, error) {
 	var f fileMap
-	// TODO abstraction ov 
+	// TODO abstraction over storage layer
 	return &f, nil
 }
