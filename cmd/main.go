@@ -33,7 +33,7 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/livery_stable?sslmode=disable"
+		return errors.New("DATABASE_URL environment variable is required")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
