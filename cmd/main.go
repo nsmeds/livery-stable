@@ -10,8 +10,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/nsmeds/livery-stable/db"
 	"github.com/nsmeds/livery-stable/server"
+	"github.com/nsmeds/livery-stable/store"
 )
 
 func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, stderr io.Writer) error {
@@ -28,12 +31,37 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 		return err
 	}
 
-	srv := server.New(*host, *port)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://postgres:postgres@localhost:5432/livery_stable?sslmode=disable"
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return errors.New("JWT_SECRET environment variable is required")
+	}
+
+	if err := db.Migrate(dbURL); err != nil {
+		return fmt.Errorf("migration failed: %w", err)
+	}
+
+	connectCtx, connectCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer connectCancel()
+	pool, err := db.Connect(connectCtx, dbURL)
+	if err != nil {
+		return fmt.Errorf("could not connect to database: %w", err)
+	}
+	defer pool.Close()
+
+	st := store.New(pool)
+	cfg := server.Config{JWTSecret: []byte(jwtSecret)}
+	srv := server.New(*host, *port, st, cfg)
+
 	go func() {
-		fmt.Println("starting server ...")
+		fmt.Fprintln(stdout, "starting server ...")
 		if err := srv.ListenAndServe(); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
-				fmt.Println("could not start server: ", err)
+				fmt.Fprintln(stderr, "could not start server: ", err)
 			}
 		}
 	}()
@@ -42,14 +70,13 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	select {
 	case <-ctx.Done():
-		fmt.Println("terminating: context canceled")
+		fmt.Fprintln(stdout, "terminating: context canceled")
 	case s := <-signals:
 		cancel()
-		fmt.Println("terminating: signal received " + s.String())
+		fmt.Fprintln(stdout, "terminating: signal received "+s.String())
 	}
 	if err := srv.Shutdown(ctx); err != nil {
-		msg := fmt.Sprintf("could not close server: %v", err)
-		return errors.New(msg)
+		return fmt.Errorf("could not close server: %w", err)
 	}
 
 	return nil
@@ -59,5 +86,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	if err := Run(ctx, cancel, os.Args, os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
 	}
 }

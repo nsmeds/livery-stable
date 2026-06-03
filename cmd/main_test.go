@@ -11,12 +11,15 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/livery_stable_test?sslmode=disable")
+	t.Setenv("JWT_SECRET", "test-jwt-secret-for-testing-only")
+
 	t.Run("start the service", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		args := []string{
 			"livery-stable",
 			"--host", "localhost",
-			"--port", "8080",
+			"--port", "8081",
 		}
 		var stdout bytes.Buffer
 		var waitgroup sync.WaitGroup
@@ -24,15 +27,12 @@ func TestRun(t *testing.T) {
 		waitgroup.Add(1)
 		go func() {
 			err = main.Run(ctx, cancel, args, &stdout, io.Discard)
-			if err != nil {
-				t.Error("unexpected err in main.Run: ", err)
-			}
 			waitgroup.Done()
 		}()
 		cancel()
 		waitgroup.Wait()
 		if err != nil {
-			t.Error(err)
+			t.Error("unexpected err in main.Run: ", err)
 		}
 	})
 }
