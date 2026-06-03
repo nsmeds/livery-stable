@@ -39,15 +39,3 @@ func (s *Server) handleMain() http.HandlerFunc {
 	}
 }
 
-type audioFile struct {
-	title string
-	data  []byte
-}
-
-type fileMap []audioFile
-
-func getAllFiles() (*fileMap, error) {
-	var f fileMap
-	// TODO abstraction over storage layer
-	return &f, nil
-}
