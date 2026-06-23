@@ -17,12 +17,9 @@ Svelte compiles to vanilla JS with no runtime dependency, producing smaller bund
 
 ---
 
-### Object Storage: S3 vs. Cloudflare R2 vs. GCS
+### Object Storage: S3 vs. Cloudflare R2 vs. GCS ✓
 
-**Recommendation: Cloudflare R2 (evaluate seriously).**
-R2 is S3-compatible (minimal code change from S3) and has **no egress fees**, which matters for an app that streams large audio files repeatedly. S3 egress pricing can become significant quickly. GCS is a solid alternative with competitive pricing. All three support presigned URLs and multipart upload. The Go SDK for S3 works with R2 via a custom endpoint.
-
-**Decide before:** Phase 2 (file upload implementation).
+**Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use the AWS Go SDK (`aws-sdk-go-v2`) pointed at the R2 endpoint. Presigned URLs and multipart upload are both supported.
 
 ---
 
@@ -43,12 +40,9 @@ The architecture should be kept portable regardless of the initial choice: stand
 
 ---
 
-### Authentication Strategy: Self-hosted vs. Managed
+### Authentication Strategy: Self-hosted vs. Managed ✓
 
-**Recommendation: Self-hosted JWT auth for MVP.**
-Given the small user base (< 25 users) and the private nature of the tool, rolling simple email/password auth with JWTs in Go is straightforward and avoids a third-party dependency. If the app grows into a consumer product, migrating to a managed auth provider (e.g., Clerk or Auth0) or adding OAuth2 (Google login) should be revisited.
-
-**Decide before:** Phase 2 (auth implementation).
+**Decision: Self-hosted JWT auth.** Email/password registration and login, bcrypt password hashing, JWTs issued as `HttpOnly` cookies, sessions stored in the DB for true logout via revocation. If the app grows into a consumer product, revisit managed auth (e.g., Clerk, Auth0) or OAuth2 (Google login).
 
 ---
 
@@ -82,21 +76,18 @@ Basic Go HTTP server with graceful shutdown. No application logic yet.
 
 ---
 
-### Phase 1 — Data Layer & Authentication
+### Phase 1 — Data Layer & Authentication ✓
 
 **Goal:** Persistent storage and authenticated user sessions.
 
-- Set up PostgreSQL (local Docker for dev, managed instance for production)
-- Database migration tooling (e.g., `golang-migrate`)
-- Schema: `users` table (id, email, password_hash, created_at, role)
-- User registration and login endpoints (email + password)
-- Password hashing (bcrypt)
-- JWT issuance and validation middleware
-- Protected route pattern in Go HTTP server
-- Logout / token invalidation strategy
-- Basic integration tests for auth flow
-
-**Design note:** Keep user roles simple for MVP — `admin` and `member`. Admin can invite/remove users.
+- PostgreSQL via Docker Compose (dev on `:5432`, test on `:5433`)
+- `golang-migrate` with SQL migrations embedded in the binary; runs automatically on startup
+- Schema: `users` (id, email, password_hash, role, created_at), `sessions` (id, user_id, expires_at, revoked_at)
+- Register, login, logout, and `/auth/me` endpoints
+- bcrypt password hashing; JWTs (HS256) issued as `HttpOnly` cookies
+- `requireAuth` middleware validates signature, expiry, and DB session revocation
+- `DATABASE_URL` and `JWT_SECRET` required as environment variables
+- Integration tests against a real database; no mocks
 
 ---
 
