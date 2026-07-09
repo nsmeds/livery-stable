@@ -16,6 +16,13 @@ type R2Config struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	Bucket          string
+
+	// Endpoint, Secure, and Region override the values normally derived
+	// from AccountID (an https R2 endpoint, region "auto"). Tests set
+	// these to point at a local MinIO instance instead of a live bucket.
+	Endpoint string
+	Secure   bool
+	Region   string
 }
 
 // R2Store stores objects in a Cloudflare R2 bucket via the S3-compatible
@@ -28,11 +35,21 @@ type R2Store struct {
 }
 
 func NewR2Store(ctx context.Context, cfg R2Config) (*R2Store, error) {
-	endpoint := fmt.Sprintf("%s.r2.cloudflarestorage.com", cfg.AccountID)
+	endpoint := cfg.Endpoint
+	secure := cfg.Secure
+	region := cfg.Region
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("%s.r2.cloudflarestorage.com", cfg.AccountID)
+		secure = true
+	}
+	if region == "" {
+		region = "auto" // Cloudflare R2's documented region value
+	}
+
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
-		Secure: true,
-		Region: "auto", // Cloudflare R2's documented region value
+		Secure: secure,
+		Region: region,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("storage: creating R2 client: %w", err)
