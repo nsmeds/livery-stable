@@ -50,6 +50,7 @@ func newTestServer(t *testing.T) *server.Server {
 	st := store.New(testPool)
 	fsStore := storage.NewFilesystemStore(t.TempDir())
 	deleter := server.NewDeleter(fsStore)
+	t.Cleanup(deleter.Close)
 	cfg := server.Config{JWTSecret: testJWTSecret, Storage: fsStore}
 	return server.New("localhost", 0, st, deleter, cfg)
 }

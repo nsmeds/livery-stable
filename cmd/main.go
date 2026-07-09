@@ -111,7 +111,7 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("could not close server: %w", err)
 	}
-	deleter.Wait()
+	deleter.Close()
 
 	return nil
 }
