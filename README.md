@@ -3,7 +3,7 @@ A lightweight, reliable and private file-sharing application for musicians and m
 ## Requirements
 
 - Go 1.22+
-- Docker (for local Postgres via docker-compose)
+- Docker (for local Postgres and MinIO via docker-compose)
 
 ## Environment variables
 
@@ -19,7 +19,7 @@ A lightweight, reliable and private file-sharing application for musicians and m
 
 ## Running locally
 
-Start the database:
+Start the database and local object storage:
 
 ```sh
 make compose-up
@@ -41,6 +41,6 @@ Migrations run automatically on startup.
 |---|---|
 | `make test` | Start the database (if needed) and run the test suite |
 | `make lint` | Run static analysis |
-| `make compose-up` | Start local Postgres containers and wait until ready |
-| `make compose-down` | Stop local Postgres containers |
+| `make compose-up` | Start local Postgres and MinIO containers and wait until ready |
+| `make compose-down` | Stop local Postgres and MinIO containers |
 | `make build` | Build a production Docker image |

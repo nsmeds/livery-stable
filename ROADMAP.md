@@ -19,7 +19,7 @@ Svelte compiles to vanilla JS with no runtime dependency, producing smaller bund
 
 ### Object Storage: S3 vs. Cloudflare R2 vs. GCS ✓
 
-**Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use `github.com/minio/minio-go/v7` pointed at the R2 endpoint, chosen over the full AWS SDK since it's purpose-built for S3-compatible stores and doesn't pull in AWS-account-specific machinery (STS, SSO, SSOOIDC) this project never uses. Presigned URLs and multipart upload are both supported. Still untested against a live bucket — validate once R2 credentials are provisioned.
+**Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use `github.com/minio/minio-go/v7` pointed at the R2 endpoint, chosen over the full AWS SDK since it's purpose-built for S3-compatible stores and doesn't pull in AWS-account-specific machinery (STS, SSO, SSOOIDC) this project never uses. Presigned URLs and multipart upload are both supported. `storage.R2Store` is covered by real integration tests against a local MinIO container (`storage/r2_test.go`, run via `make test`), which validates the S3-compatible request/response handling; the R2-specific endpoint and real credentials remain unverified against an actual R2 bucket — validate that combination once R2 credentials are provisioned.
 
 ---
 
