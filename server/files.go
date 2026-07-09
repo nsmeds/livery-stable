@@ -91,7 +91,7 @@ func (s *Server) handleUploadFile() http.HandlerFunc {
 
 		id := uuid.New()
 		storageKey := fmt.Sprintf("%s/%s.%s", userID, id, format)
-		if err := s.config.Storage.Put(r.Context(), storageKey, file); err != nil {
+		if err := s.config.Storage.Put(r.Context(), storageKey, file, header.Size); err != nil {
 			writeError(w, http.StatusInternalServerError, "internal error")
 			return
 		}

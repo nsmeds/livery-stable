@@ -19,9 +19,7 @@ Svelte compiles to vanilla JS with no runtime dependency, producing smaller bund
 
 ### Object Storage: S3 vs. Cloudflare R2 vs. GCS ✓
 
-**Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use the AWS Go SDK (`aws-sdk-go-v2`) pointed at the R2 endpoint. Presigned URLs and multipart upload are both supported.
-
-**Follow-up to revisit:** `aws-sdk-go-v2` pulls in a lot of AWS-specific machinery (STS, SSO, SSOOIDC, a "signin" service) that a single S3-compatible bucket with static credentials never touches. `github.com/minio/minio-go/v7` is purpose-built for S3-compatible stores (R2, MinIO, DigitalOcean Spaces included), has a much smaller dependency footprint, and still handles multipart upload and presigned URLs. Worth migrating `storage/r2.go` to it once R2 credentials are provisioned and there's a live bucket to validate the switch against.
+**Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use `github.com/minio/minio-go/v7` pointed at the R2 endpoint, chosen over the full AWS SDK since it's purpose-built for S3-compatible stores and doesn't pull in AWS-account-specific machinery (STS, SSO, SSOOIDC) this project never uses. Presigned URLs and multipart upload are both supported. Still untested against a live bucket — validate once R2 credentials are provisioned.
 
 ---
 
@@ -102,9 +100,9 @@ this phase is scoped to curl/Postman-testable HTTP endpoints — no upload UI or
 progress indicator yet.
 
 - Storage built against a `Store` interface: a local-filesystem implementation for dev/CI,
-  and a Cloudflare R2 implementation (S3-compatible, via `aws-sdk-go-v2`) selected once R2
+  and a Cloudflare R2 implementation (S3-compatible, via `minio-go`) selected once R2
   credentials are supplied via env vars
-- Multipart upload support for large files (required for > 5 MB reliably, essential for 2 GB files), handled transparently by the S3 upload manager — no custom chunked/resumable protocol needed since there's no client yet
+- Multipart upload support for large files (required for > 5 MB reliably, essential for 2 GB files), handled transparently by minio-go's `PutObject` — no custom chunked/resumable protocol needed since there's no client yet
 - Server-side validation: file format (hand-rolled magic-byte sniffing), file size limit
 - Schema: `files` table (id, owner_id, filename, format, size_bytes, duration_seconds, storage_key, uploaded_at, deleted_at)
 - List files endpoint (authenticated, scoped to owner)

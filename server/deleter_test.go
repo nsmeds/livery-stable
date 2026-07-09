@@ -17,7 +17,7 @@ func TestDeleter_EnqueueAndWait(t *testing.T) {
 	ctx := context.Background()
 
 	key := "file.wav"
-	if err := fsStore.Put(ctx, key, bytes.NewReader([]byte("data"))); err != nil {
+	if err := fsStore.Put(ctx, key, bytes.NewReader([]byte("data")), 4); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 
@@ -38,7 +38,7 @@ func TestDeleter_MultipleEnqueues(t *testing.T) {
 
 	keys := []string{"a.wav", "b.wav", "c.wav"}
 	for _, k := range keys {
-		if err := fsStore.Put(ctx, k, bytes.NewReader([]byte("data"))); err != nil {
+		if err := fsStore.Put(ctx, k, bytes.NewReader([]byte("data")), 4); err != nil {
 			t.Fatalf("Put: %v", err)
 		}
 	}
@@ -63,7 +63,7 @@ func TestDeleter_Close(t *testing.T) {
 	ctx := context.Background()
 
 	key := "file.wav"
-	if err := fsStore.Put(ctx, key, bytes.NewReader([]byte("data"))); err != nil {
+	if err := fsStore.Put(ctx, key, bytes.NewReader([]byte("data")), 4); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 

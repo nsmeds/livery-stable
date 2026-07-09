@@ -18,7 +18,7 @@ func TestFilesystemStore_PutAndDelete(t *testing.T) {
 	key := "abc/file.wav"
 	content := []byte("fake audio content")
 
-	if err := store.Put(ctx, key, bytes.NewReader(content)); err != nil {
+	if err := store.Put(ctx, key, bytes.NewReader(content), int64(len(content))); err != nil {
 		t.Fatalf("Put() error = %v", err)
 	}
 
