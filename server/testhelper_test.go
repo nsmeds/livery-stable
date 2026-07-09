@@ -15,6 +15,7 @@ import (
 
 	"github.com/nsmeds/livery-stable/db"
 	"github.com/nsmeds/livery-stable/server"
+	"github.com/nsmeds/livery-stable/storage"
 	"github.com/nsmeds/livery-stable/store"
 )
 
@@ -47,8 +48,10 @@ func TestMain(m *testing.M) {
 func newTestServer(t *testing.T) *server.Server {
 	t.Helper()
 	st := store.New(testPool)
-	cfg := server.Config{JWTSecret: testJWTSecret}
-	return server.New("localhost", 0, st, cfg)
+	fsStore := storage.NewFilesystemStore(t.TempDir())
+	deleter := server.NewDeleter(fsStore)
+	cfg := server.Config{JWTSecret: testJWTSecret, Storage: fsStore}
+	return server.New("localhost", 0, st, deleter, cfg)
 }
 
 func registerAndLogin(t *testing.T, srv *server.Server, email, password string) *http.Cookie {

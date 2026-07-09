@@ -9,12 +9,13 @@ import (
 
 type Server struct {
 	*http.Server
-	store  *store.Store
-	config Config
+	store   *store.Store
+	config  Config
+	deleter *Deleter
 }
 
-func New(host string, port int, st *store.Store, cfg Config) *Server {
-	s := Server{store: st, config: cfg}
+func New(host string, port int, st *store.Store, deleter *Deleter, cfg Config) *Server {
+	s := Server{store: st, deleter: deleter, config: cfg}
 	httpServer := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", host, port),
 		Handler: s.Routes(),
@@ -38,4 +39,3 @@ func (s *Server) handleMain() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-

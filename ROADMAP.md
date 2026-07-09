@@ -95,13 +95,18 @@ Basic Go HTTP server with graceful shutdown. No application logic yet.
 
 **Goal:** Authenticated users can upload audio files to object storage.
 
-- Integrate Go SDK for chosen object store (S3 or R2)
-- Multipart upload support for large files (required for > 5 MB reliably, essential for 2 GB files)
-- Upload progress feedback via chunked or resumable upload
-- Server-side validation: file format (by MIME type and magic bytes), file size limit
+**Backend only.** No frontend exists yet (framework decision is deferred to Phase 3), so
+this phase is scoped to curl/Postman-testable HTTP endpoints — no upload UI or client-side
+progress indicator yet.
+
+- Storage built against a `Store` interface: a local-filesystem implementation for dev/CI,
+  and a Cloudflare R2 implementation (S3-compatible, via `aws-sdk-go-v2`) selected once R2
+  credentials are supplied via env vars
+- Multipart upload support for large files (required for > 5 MB reliably, essential for 2 GB files), handled transparently by the S3 upload manager — no custom chunked/resumable protocol needed since there's no client yet
+- Server-side validation: file format (hand-rolled magic-byte sniffing), file size limit
 - Schema: `files` table (id, owner_id, filename, format, size_bytes, duration_seconds, storage_key, uploaded_at, deleted_at)
 - List files endpoint (authenticated, scoped to owner)
-- Delete file endpoint (soft delete; remove from object storage async or on hard delete)
+- Delete file endpoint (soft delete; storage object removed asynchronously via an in-process worker)
 - Unit tests for upload validation logic
 
 ---
