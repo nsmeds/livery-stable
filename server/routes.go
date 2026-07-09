@@ -19,5 +19,10 @@ func (s *Server) Routes() *http.ServeMux {
 	// Protected app routes
 	router.Handle("GET /main", s.requireAuth(s.handleMain()))
 
+	// Protected file routes
+	router.Handle("POST /files", s.requireAuth(s.handleUploadFile()))
+	router.Handle("GET /files", s.requireAuth(s.handleListFiles()))
+	router.Handle("DELETE /files/{id}", s.requireAuth(s.handleDeleteFile()))
+
 	return router
 }

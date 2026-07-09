@@ -11,6 +11,11 @@ A lightweight, reliable and private file-sharing application for musicians and m
 |---|---|---|
 | `DATABASE_URL` | Yes | Postgres connection string, e.g. `postgres://user:pass@host/db?sslmode=disable` |
 | `JWT_SECRET` | Yes | Secret key used to sign session tokens |
+| `STORAGE_DIR` | No | Local directory for uploaded files when R2 isn't configured. Defaults to `./data/uploads` |
+| `R2_ACCOUNT_ID` | No | Cloudflare account ID; enables R2 storage when set together with the other `R2_*` vars |
+| `R2_ACCESS_KEY_ID` | No | R2 API access key ID |
+| `R2_SECRET_ACCESS_KEY` | No | R2 API secret access key |
+| `R2_BUCKET` | No | R2 bucket name |
 
 ## Running locally
 

@@ -14,8 +14,34 @@ import (
 
 	"github.com/nsmeds/livery-stable/db"
 	"github.com/nsmeds/livery-stable/server"
+	"github.com/nsmeds/livery-stable/storage"
 	"github.com/nsmeds/livery-stable/store"
 )
+
+// newStorage selects a Cloudflare R2-backed store when its credentials are
+// present in the environment, and otherwise falls back to a local
+// filesystem store for dev and CI.
+func newStorage(ctx context.Context) (storage.Store, error) {
+	accountID := os.Getenv("R2_ACCOUNT_ID")
+	accessKeyID := os.Getenv("R2_ACCESS_KEY_ID")
+	secretAccessKey := os.Getenv("R2_SECRET_ACCESS_KEY")
+	bucket := os.Getenv("R2_BUCKET")
+
+	if accountID != "" && accessKeyID != "" && secretAccessKey != "" && bucket != "" {
+		return storage.NewR2Store(ctx, storage.R2Config{
+			AccountID:       accountID,
+			AccessKeyID:     accessKeyID,
+			SecretAccessKey: secretAccessKey,
+			Bucket:          bucket,
+		})
+	}
+
+	dir := os.Getenv("STORAGE_DIR")
+	if dir == "" {
+		dir = "./data/uploads"
+	}
+	return storage.NewFilesystemStore(dir), nil
+}
 
 func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, stderr io.Writer) error {
 	defer cancel()
@@ -54,8 +80,15 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 	defer pool.Close()
 
 	st := store.New(pool)
-	cfg := server.Config{JWTSecret: []byte(jwtSecret)}
-	srv := server.New(*host, *port, st, cfg)
+
+	storageStore, err := newStorage(ctx)
+	if err != nil {
+		return fmt.Errorf("could not initialize storage: %w", err)
+	}
+	deleter := server.NewDeleter(storageStore)
+
+	cfg := server.Config{JWTSecret: []byte(jwtSecret), Storage: storageStore}
+	srv := server.New(*host, *port, st, deleter, cfg)
 
 	go func() {
 		fmt.Fprintln(stdout, "starting server ...")
@@ -78,6 +111,7 @@ func Run(ctx context.Context, cancel context.CancelFunc, args []string, stdout, 
 	if err := srv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("could not close server: %w", err)
 	}
+	deleter.Wait()
 
 	return nil
 }
