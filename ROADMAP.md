@@ -21,6 +21,8 @@ Svelte compiles to vanilla JS with no runtime dependency, producing smaller bund
 
 **Decision: Cloudflare R2.** No egress fees, which matters for repeated audio streaming of large files. S3-compatible API — use the AWS Go SDK (`aws-sdk-go-v2`) pointed at the R2 endpoint. Presigned URLs and multipart upload are both supported.
 
+**Follow-up to revisit:** `aws-sdk-go-v2` pulls in a lot of AWS-specific machinery (STS, SSO, SSOOIDC, a "signin" service) that a single S3-compatible bucket with static credentials never touches. `github.com/minio/minio-go/v7` is purpose-built for S3-compatible stores (R2, MinIO, DigitalOcean Spaces included), has a much smaller dependency footprint, and still handles multipart upload and presigned URLs. Worth migrating `storage/r2.go` to it once R2 credentials are provisioned and there's a live bucket to validate the switch against.
+
 ---
 
 ### Cloud Deployment Target

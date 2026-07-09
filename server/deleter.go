@@ -17,15 +17,17 @@ type Deleter struct {
 	store storage.Store
 	jobs  chan string
 	wg    sync.WaitGroup
+	done  chan struct{}
 }
 
 func NewDeleter(store storage.Store) *Deleter {
-	d := &Deleter{store: store, jobs: make(chan string, 64)}
+	d := &Deleter{store: store, jobs: make(chan string, 64), done: make(chan struct{})}
 	go d.run()
 	return d
 }
 
 func (d *Deleter) run() {
+	defer close(d.done)
 	for key := range d.jobs {
 		if err := d.store.Delete(context.Background(), key); err != nil {
 			log.Printf("deleter: failed to delete storage key %q: %v", key, err)
@@ -34,7 +36,8 @@ func (d *Deleter) run() {
 	}
 }
 
-// Enqueue schedules a storage key for asynchronous deletion.
+// Enqueue schedules a storage key for asynchronous deletion. Must not be
+// called after Close.
 func (d *Deleter) Enqueue(key string) {
 	d.wg.Add(1)
 	d.jobs <- key
@@ -44,4 +47,12 @@ func (d *Deleter) Enqueue(key string) {
 // during graceful shutdown so in-flight deletes aren't silently dropped.
 func (d *Deleter) Wait() {
 	d.wg.Wait()
+}
+
+// Close stops accepting new jobs and blocks until the worker goroutine has
+// drained the queue and exited, so it doesn't leak past the Deleter's
+// lifetime.
+func (d *Deleter) Close() {
+	close(d.jobs)
+	<-d.done
 }
