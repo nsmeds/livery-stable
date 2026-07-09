@@ -8,8 +8,10 @@ import (
 	"io"
 )
 
-// Store persists and removes file content addressed by an opaque key.
+// Store persists and removes file content addressed by an opaque key. size
+// is the number of bytes r will yield; passing the true size (rather than
+// -1 for "unknown") lets the R2 implementation upload more efficiently.
 type Store interface {
-	Put(ctx context.Context, key string, r io.Reader) error
+	Put(ctx context.Context, key string, r io.Reader, size int64) error
 	Delete(ctx context.Context, key string) error
 }

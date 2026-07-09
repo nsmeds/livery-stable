@@ -18,7 +18,7 @@ func NewFilesystemStore(root string) *FilesystemStore {
 	return &FilesystemStore{root: root}
 }
 
-func (s *FilesystemStore) Put(ctx context.Context, key string, r io.Reader) error {
+func (s *FilesystemStore) Put(ctx context.Context, key string, r io.Reader, size int64) error {
 	path := filepath.Join(s.root, key)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
